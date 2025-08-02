@@ -1,0 +1,63 @@
+import requests
+import os
+import time
+import colorama
+from colorama import Fore, Style
+
+# Initialize Colorama
+colorama.init(autoreset=True)
+
+logo = '''
+\033[38;2;255;255;255m █     █░▓█████  ▄▄▄▄    ██░ ██  ▒█████   ▒█████   ██ ▄█▀     █████▒█    ██  ▄████▄   ██ ▄█▀▓█████  ██▀███  
+\033[38;2;255;200;200m▓█░ █ ░█░▓█   ▀ ▓█████▄ ▓██░ ██▒▒██▒  ██▒▒██▒  ██▒ ██▄█▒    ▓██   ▒ ██  ▓██▒▒██▀ ▀█   ██▄█▒ ▓█   ▀ ▓██ ▒ ██▒
+\033[38;2;255;170;170m▒█░ █ ░█ ▒███   ▒██▒ ▄██▒██▀▀██░▒██░  ██▒▒██░  ██▒▓███▄░    ▒████ ░▓██  ▒██░▒▓█    ▄ ▓███▄░ ▒███   ▓██ ░▄█ ▒
+\033[38;2;255;140;140m░█░ █ ░█ ▒▓█  ▄ ▒██░█▀  ░▓█ ░██ ▒██   ██░▒██   ██░▓██ █▄    ░▓█▒  ░▓▓█  ░██░▒▓▓▄ ▄██▒▓██ █▄ ▒▓█  ▄ ▒██▀▀█▄  
+\033[38;2;255;110;110m░░██▒██▓ ░▒████▒░▓█  ▀█▓░▓█▒░██▓░ ████▓▒░░ ████▓▒░▒██▒ █▄   ░▒█░   ▒▒█████▓ ▒ ▓███▀ ░▒██▒ █▄░▒████▒░██▓ ▒██▒
+\033[38;2;220;60;60m░ ▓░▒ ▒  ░░ ▒░ ░░▒▓███▀▒ ▒ ░░▒░▒░ ▒░▒░▒░ ░ ▒░▒░▒░ ▒ ▒▒ ▓▒    ▒ ░   ░▒▓▒ ▒ ▒ ░ ░▒ ▒  ░▒ ▒▒ ▓▒░░ ▒░ ░░ ▒▓ ░▒▓░
+\033[38;2;180;30;30m  ▒ ░ ░   ░ ░  ░▒░▒   ░  ▒ ░▒░ ░  ░ ▒ ▒░   ░ ▒ ▒░ ░ ░▒ ▒░    ░     ░░▒░ ░ ░   ░  ▒   ░ ░▒ ▒░ ░ ░  ░  ░▒ ░ ▒░
+\033[38;2;150;10;10m  ░   ░     ░    ░    ░  ░  ░░ ░░ ░ ░ ▒  ░ ░ ░ ▒  ░ ░░ ░     ░ ░    ░░░ ░ ░ ░        ░ ░░ ░    ░     ░░   ░ 
+\033[38;2;120;0;0m    ░       ░  ░ ░       ░  ░  ░    ░ ░      ░ ░  ░  ░                ░     ░ ░      ░  ░      ░  ░   ░     
+\033[0m
+'''
+
+# Clear screen and set title
+os.system('cls' if os.name == 'nt' else 'clear')
+print(logo)
+os.system('title xenos webhook fucker' if os.name == 'nt' else '')
+
+# Red prompt labels
+def red_input(prompt):
+    return input(Fore.RED + prompt + Style.RESET_ALL)
+
+# Gather input
+webhook = red_input("Webhook URL: ")
+amount = int(red_input("Amount of messages to send: "))
+message = red_input("Message content: ")
+
+# Delay selection menu
+while True:
+    delay_input = red_input("Delay between messages (seconds, e.g., 0.10 - 1): ").strip()
+    try:
+        delay = float(delay_input)
+        if 0.10 <= delay <= 1:
+            break
+        else:
+            print(Fore.RED + " Please enter a number between 0.10 and 1." + Style.RESET_ALL)
+    except ValueError:
+        print(Fore.RED + " Invalid input. Please enter a valid number." + Style.RESET_ALL)
+
+print(Fore.RED + f"\nSending {amount} messages with a {delay} second delay.\n" + Style.RESET_ALL)
+
+# Payload
+payload = {"content": message}
+
+# Send messages
+for i in range(amount):
+    response = requests.post(webhook, json=payload)
+    if response.status_code == 204:
+        print(Fore.RED + f"[{i + 1}/{amount}]  Message sent successfully." + Style.RESET_ALL)
+    else:
+        print(Fore.RED + f"[{i + 1}/{amount}]  Error sending message (HTTP {response.status_code})." + Style.RESET_ALL)
+    time.sleep(delay)
+
+red_input("\nDone! Press ENTER to exit...")
