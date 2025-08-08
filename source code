@@ -1,63 +1,250 @@
-import requests
 import os
 import time
+import shutil
 import colorama
 from colorama import Fore, Style
+import tkinter as tk
+from tkinter import filedialog
+import requests
+import json
+import uuid
+import random
 
-# Initialize Colorama
+# Set title and init colors
+os.system("title Strata V2")
 colorama.init(autoreset=True)
 
-logo = '''
-\033[38;2;255;255;255m █     █░▓█████  ▄▄▄▄    ██░ ██  ▒█████   ▒█████   ██ ▄█▀     █████▒█    ██  ▄████▄   ██ ▄█▀▓█████  ██▀███  
-\033[38;2;255;200;200m▓█░ █ ░█░▓█   ▀ ▓█████▄ ▓██░ ██▒▒██▒  ██▒▒██▒  ██▒ ██▄█▒    ▓██   ▒ ██  ▓██▒▒██▀ ▀█   ██▄█▒ ▓█   ▀ ▓██ ▒ ██▒
-\033[38;2;255;170;170m▒█░ █ ░█ ▒███   ▒██▒ ▄██▒██▀▀██░▒██░  ██▒▒██░  ██▒▓███▄░    ▒████ ░▓██  ▒██░▒▓█    ▄ ▓███▄░ ▒███   ▓██ ░▄█ ▒
-\033[38;2;255;140;140m░█░ █ ░█ ▒▓█  ▄ ▒██░█▀  ░▓█ ░██ ▒██   ██░▒██   ██░▓██ █▄    ░▓█▒  ░▓▓█  ░██░▒▓▓▄ ▄██▒▓██ █▄ ▒▓█  ▄ ▒██▀▀█▄  
-\033[38;2;255;110;110m░░██▒██▓ ░▒████▒░▓█  ▀█▓░▓█▒░██▓░ ████▓▒░░ ████▓▒░▒██▒ █▄   ░▒█░   ▒▒█████▓ ▒ ▓███▀ ░▒██▒ █▄░▒████▒░██▓ ▒██▒
-\033[38;2;220;60;60m░ ▓░▒ ▒  ░░ ▒░ ░░▒▓███▀▒ ▒ ░░▒░▒░ ▒░▒░▒░ ░ ▒░▒░▒░ ▒ ▒▒ ▓▒    ▒ ░   ░▒▓▒ ▒ ▒ ░ ░▒ ▒  ░▒ ▒▒ ▓▒░░ ▒░ ░░ ▒▓ ░▒▓░
-\033[38;2;180;30;30m  ▒ ░ ░   ░ ░  ░▒░▒   ░  ▒ ░▒░ ░  ░ ▒ ▒░   ░ ▒ ▒░ ░ ░▒ ▒░    ░     ░░▒░ ░ ░   ░  ▒   ░ ░▒ ▒░ ░ ░  ░  ░▒ ░ ▒░
-\033[38;2;150;10;10m  ░   ░     ░    ░    ░  ░  ░░ ░░ ░ ░ ▒  ░ ░ ░ ▒  ░ ░░ ░     ░ ░    ░░░ ░ ░ ░        ░ ░░ ░    ░     ░░   ░ 
-\033[38;2;120;0;0m    ░       ░  ░ ░       ░  ░  ░    ░ ░      ░ ░  ░  ░                ░     ░ ░      ░  ░      ░  ░   ░     
-\033[0m
-'''
+# Themes
+THEMES = {
+    "Red": {"main": Fore.LIGHTRED_EX, "rgb": (255, 100, 100), "success": Fore.GREEN, "error": Fore.RED, "warning": Fore.YELLOW},
+    "Blue": {"main": Fore.CYAN, "rgb": (100, 255, 255), "success": Fore.GREEN, "error": Fore.RED, "warning": Fore.YELLOW},
+    "Green": {"main": Fore.GREEN, "rgb": (100, 255, 100), "success": Fore.GREEN, "error": Fore.RED, "warning": Fore.YELLOW},
+    "White": {"main": Fore.WHITE, "rgb": (255, 255, 255), "success": Fore.GREEN, "error": Fore.RED, "warning": Fore.YELLOW},
+    "Purple Haze": {"main": Fore.MAGENTA, "rgb": (200, 100, 255), "success": Fore.LIGHTMAGENTA_EX, "error": Fore.RED, "warning": Fore.YELLOW},
+    "Orange Inferno": {"main": Fore.LIGHTYELLOW_EX, "rgb": (255, 165, 0), "success": Fore.GREEN, "error": Fore.RED, "warning": Fore.YELLOW},
+    
+}
+theme = THEMES["Red"]
 
-# Clear screen and set title
-os.system('cls' if os.name == 'nt' else 'clear')
-print(logo)
-os.system('title xenos webhook fucker' if os.name == 'nt' else '')
+# JSONBin setup
+JSONBIN_URL = "https://api.jsonbin.io/v3/b/688e14697b4b8670d8aba80c"
+JSONBIN_WRITE_KEY = "$2a$10$OsbdjLGXiUBvhazALfM2G.zkaY32Zwfg0yacNCuKpUy9CGoDAmCIu"
+HEADERS_READ = {"X-Master-Key": JSONBIN_WRITE_KEY}
+HEADERS_WRITE = {"X-Master-Key": JSONBIN_WRITE_KEY, "Content-Type": "application/json"}
 
-# Red prompt labels
-def red_input(prompt):
-    return input(Fore.RED + prompt + Style.RESET_ALL)
+# Logo
+logo_lines = [
+    " ██████ ▄▄▄█████▓ ██▀███   ▄▄▄     ▄▄▄█████▓ ▄▄▄          ██▒   █▓   ▄▄▄█████▓ █     █░ ▒█████  ",
+    "▒██    ▒ ▓  ██▒ ▓▒▓██ ▒ ██▒▒████▄   ▓  ██▒ ▓▒▒████▄       ▓██░   █▒   ▓  ██▒ ▓▒▓█░ █ ░█░▒██▒  ██▒",
+    "░ ▓██▄   ▒ ▓██░ ▒░▓██ ░▄█ ▒▒██  ▀█▄ ▒ ▓██░ ▒░▒██  ▀█▄      ▓██  █▒░   ▒ ▓██░ ▒░▒█░ █ ░█ ▒██░  ██▒",
+    "  ▒   ██▒░ ▓██▓ ░ ▒██▀▀█▄  ░██▄▄▄▄██░ ▓██▓ ░ ░██▄▄▄▄██      ▒██ █░░   ░ ▓██▓ ░ ░█░ █ ░█ ▒██   ██░",
+    "▒██████▒▒  ▒██▒ ░ ░██▓ ▒██▒ ▓█   ▓██▒ ▒██▒ ░  ▓█   ▓██▒      ▒▀█░       ▒██▒ ░ ░░██▒██▓ ░ ████▓▒░",
+    "▒ ▒▓▒ ▒ ░  ▒ ░░   ░ ▒▓ ░▒▓░ ▒▒   ▓▒█░ ▒ ░░    ▒▒   ▓▒█░      ░ ▐░       ▒ ░░   ░ ▓░▒ ▒  ░ ▒░▒░▒░ ",
+    "░ ░▒  ░ ░    ░      ░▒ ░ ▒░  ▒   ▒▒ ░   ░      ▒   ▒▒ ░      ░ ░░         ░      ▒ ░ ░    ░ ▒ ▒░ ",
+    "░  ░  ░    ░        ░░   ░   ░   ▒    ░        ░   ▒           ░░       ░        ░   ░  ░ ░ ░ ▒  ",
+    "      ░              ░           ░  ░              ░  ░         ░                  ░        ░ ░  ",
+]
 
-# Gather input
-webhook = red_input("Webhook URL: ")
-amount = int(red_input("Amount of messages to send: "))
-message = red_input("Message content: ")
+# UI helpers
+def clear_screen(): os.system('cls' if os.name == 'nt' else 'clear')
+def fade_color(start_rgb, end_rgb, step, max_steps):
+    r = int(start_rgb[0] + (end_rgb[0] - start_rgb[0]) * step / max_steps)
+    g = int(start_rgb[1] + (end_rgb[1] - start_rgb[1]) * step / max_steps)
+    b = int(start_rgb[2] + (end_rgb[2] - start_rgb[2]) * step / max_steps)
+    return f"\033[38;2;{r};{g};{b}m"
+def print_logo():
+    try: width = shutil.get_terminal_size().columns
+    except: width = 80
+    max_steps = len(logo_lines) - 1
+    start_rgb = (255, 255, 255)
+    end_rgb = theme['rgb']
+    for i, line in enumerate(logo_lines):
+        color_code = fade_color(start_rgb, end_rgb, i, max_steps)
+        print(f"{color_code}{line.center(width)}{Style.RESET_ALL}")
+def refresh_screen(): clear_screen(); print_logo(); print(f"\n{theme['main']}{'-'*33}\n Main Menu -- Made by xet2x on yt\n{'-'*33}{Style.RESET_ALL}")
+def red_input(label): return input(f"{theme['main']}> {label}: {Style.RESET_ALL}")
 
-# Delay selection menu
-while True:
-    delay_input = red_input("Delay between messages (seconds, e.g., 0.10 - 1): ").strip()
+# User functions
+def get_unique_user_id(): return str(uuid.getnode())
+def fetch_users():
     try:
-        delay = float(delay_input)
-        if 0.10 <= delay <= 1:
+        res = requests.get(JSONBIN_URL + "/latest", headers=HEADERS_READ)
+        if res.status_code == 200:
+            return res.json().get("record", {}).get("users", [])
+    except: pass
+    return []
+def update_users(users):
+    try:
+        payload = json.dumps({"users": users})
+        res = requests.put(JSONBIN_URL, headers=HEADERS_WRITE, data=payload)
+        return res.status_code in (200, 201)
+    except: return False
+def register_user():
+    user_id = get_unique_user_id()
+    users = fetch_users()
+    if user_id not in users:
+        users.append(user_id)
+        update_users(users)
+    return len(users)
+
+# Core features
+def send_message():
+    webhook = red_input("Webhook URL")
+    message = red_input("Message")
+    try:
+        amount = int(red_input("Amount"))
+        delay = float(red_input("Delay between messages (0.01 - 1.00 sec)"))
+    except ValueError:
+        print(theme['warning'] + "Invalid input. Returning to menu.")
+        time.sleep(1.5)
+        return
+    payload = {"content": message}
+    for i in range(amount):
+        try:
+            res = requests.post(webhook, json=payload)
+            print(f"{theme['success']}[{i+1}/{amount}] Sent" if res.status_code in (200, 204) else f"{theme['error']}[{i+1}/{amount}] Failed (HTTP {res.status_code})")
+        except Exception as e:
+            print(f"{theme['error']} Error: {e}")
+        time.sleep(delay)
+    input(theme['main'] + "\nPress ENTER to return..." + Style.RESET_ALL)
+    refresh_screen()
+
+def send_embed():
+    webhook = red_input("Webhook URL")
+    title = red_input("Embed Title")
+    description = red_input("Embed Description")
+    embed = {"embeds": [{"title": title, "description": description, "color": 16711680}]}
+    res = requests.post(webhook, json=embed)
+    print(theme['success'] + "Embed sent." if res.status_code in (200, 204) else theme['error'] + f"Failed (HTTP {res.status_code})")
+    input(theme['main'] + "\nPress ENTER to return..." + Style.RESET_ALL)
+    refresh_screen()
+
+def send_file():
+    webhook = red_input("Webhook URL")
+    root = tk.Tk(); root.withdraw()
+    file_path = filedialog.askopenfilename(title="Select a file to send")
+    root.destroy()
+    if not file_path:
+        print(theme['error'] + "No file selected.")
+        input(theme['main'] + "\nPress ENTER to return..." + Style.RESET_ALL)
+        refresh_screen()
+        return
+    message = red_input("Message content (optional)")
+    with open(file_path, 'rb') as f:
+        res = requests.post(webhook, data={"content": message}, files={"file": f})
+        print(theme['success'] + "File sent." if res.status_code in (200, 204) else theme['error'] + f"Failed (HTTP {res.status_code})")
+    input(theme['main'] + "\nPress ENTER to return..." + Style.RESET_ALL)
+    refresh_screen()
+
+def delete_webhook():
+    webhook = red_input("Webhook URL")
+    confirm = red_input(f"{theme['warning']}Are you sure you want to delete this webhook? (y/n)").lower()
+    if confirm == 'y':
+        res = requests.delete(webhook)
+        print(theme['success'] + "Webhook deleted." if res.status_code == 204 else theme['error'] + f"Failed to delete webhook (HTTP {res.status_code})")
+    else:
+        print(theme['warning'] + "Deletion cancelled.")
+    input(theme['main'] + "\nPress ENTER to return..." + Style.RESET_ALL)
+    refresh_screen()
+
+def view_webhook_info():
+    webhook = red_input("Webhook URL")
+    res = requests.get(webhook)
+    if res.status_code == 200:
+        data = res.json()
+        print(theme['main'] + f"\nName: {data['name']}\nID: {data['id']}\nChannel ID: {data['channel_id']}")
+    else:
+        print(theme['error'] + f"Failed to fetch info (HTTP {res.status_code})")
+    input(theme['main'] + "\nPress ENTER to return..." + Style.RESET_ALL)
+    refresh_screen()
+
+def send_fake_nitro():
+    webhook = red_input("Webhook URL")
+    fake_code = ''.join(random.choices("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=16))
+    fake_url = f"https://discord.gift/{fake_code}"
+    embed = {
+        "embeds": [{
+            "title": "🎁 You've been gifted a subscription!",
+            "description": f"[Click to claim]({fake_url})",
+            "color": 0x7289DA,
+            "thumbnail": {"url": "https://www.fosslinux.com/wp-content/uploads/2022/11/Discord-Nitro.png"},
+            "footer": {"text": "Expires in 48 hours"}
+        }]
+    }
+    res = requests.post(webhook, json=embed)
+    print(theme['success'] + "Fake Nitro gift sent." if res.status_code in (200, 204) else theme['error'] + f"Failed to send gift (HTTP {res.status_code})")
+    input(theme['main'] + "\nPress ENTER to return..." + Style.RESET_ALL)
+    refresh_screen()
+
+def xet_bomb():
+    webhook = red_input("Webhook URL")
+    try:
+        amount = int(red_input("Total messages to send"))
+    except ValueError:
+        print(theme['warning'] + "Invalid number.")
+        time.sleep(1.5)
+        return
+    messages = [
+        "💀 XET FUCKED YOU BITCH💀",
+        "🐀STOP RATTING FAGGOT🐀",
+        "🤣YOUR SO DUMB LOL🤣",
+        "🤡LEARN HOW TO PROTECT YOUR WEBHOOK DUMBASS🤡"
+    ]
+    last_msg = None
+    for i in range(amount):
+        msg = random.choice([m for m in messages if m != last_msg])
+        last_msg = msg
+        payload = {"content": msg}
+        try:
+            res = requests.post(webhook, json=payload)
+            print(f"{theme['success']}[{i+1}/{amount}] Sent" if res.status_code in (200, 204) else f"{theme['error']}[{i+1}/{amount}] Failed (HTTP {res.status_code})")
+        except Exception as e:
+            print(f"{theme['error']} Error: {e}")
+        time.sleep(0.01)
+    input(theme['main'] + "\nPress ENTER to return..." + Style.RESET_ALL)
+    refresh_screen()
+
+def choose_theme():
+    global theme
+    clear_screen(); print_logo()
+    print(f"{Fore.LIGHTRED_EX}Select a color theme:\n")
+    for idx, name in enumerate(THEMES.keys(), 1): print(f"[{idx}] {name}")
+    choice = input("\n> Theme choice: ")
+    try: theme = THEMES[list(THEMES.keys())[int(choice)-1]]
+    except: print(Fore.YELLOW + "Invalid choice. Defaulting to Red."); theme = THEMES["Red"]
+    refresh_screen()
+
+def main_menu():
+    user_count = register_user()
+    print(f"{theme['main']}[Users using tool: {user_count}]\n")
+    print(f"{theme['main']}[1] Send message")
+    print(f"{theme['main']}[2] Send embed")
+    print(f"{theme['main']}[3] Send file")
+    print(f"{theme['main']}[4] Delete webhook")
+    print(f"{theme['main']}[5] View webhook info")
+    print(f"{theme['main']}[6] Send fake Nitro gift")
+    print(f"{theme['main']}[7] XET BOMB")
+    print(f"{theme['main']}[0] Exit")
+    return red_input("Choose an option")
+
+# Start app
+try:
+    choose_theme()
+    while True:
+        choice = main_menu()
+        if choice == '1': send_message()
+        elif choice == '2': send_embed()
+        elif choice == '3': send_file()
+        elif choice == '4': delete_webhook()
+        elif choice == '5': view_webhook_info()
+        elif choice == '6': send_fake_nitro()
+        elif choice == '7': xet_bomb()
+        elif choice == '0':
+            print(theme['warning'] + "Cya -xet." + Style.RESET_ALL)
             break
         else:
-            print(Fore.RED + " Please enter a number between 0.10 and 1." + Style.RESET_ALL)
-    except ValueError:
-        print(Fore.RED + " Invalid input. Please enter a valid number." + Style.RESET_ALL)
-
-print(Fore.RED + f"\nSending {amount} messages with a {delay} second delay.\n" + Style.RESET_ALL)
-
-# Payload
-payload = {"content": message}
-
-# Send messages
-for i in range(amount):
-    response = requests.post(webhook, json=payload)
-    if response.status_code == 204:
-        print(Fore.RED + f"[{i + 1}/{amount}]  Message sent successfully." + Style.RESET_ALL)
-    else:
-        print(Fore.RED + f"[{i + 1}/{amount}]  Error sending message (HTTP {response.status_code})." + Style.RESET_ALL)
-    time.sleep(delay)
-
-red_input("\nDone! Press ENTER to exit...")
+            print(theme['error'] + "Invalid option. Try again." + Style.RESET_ALL)
+except Exception as e:
+    print(Fore.RED + f"\nUnexpected error: {e}")
+finally:
+    input(Fore.CYAN + "\nPress ENTER to exit..." + Style.RESET_ALL)
